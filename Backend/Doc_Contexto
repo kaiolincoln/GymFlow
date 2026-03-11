@@ -1,0 +1,194 @@
+🏋️ Estrutura do Backend — GymFlow
+gymflow-backend/
+├── prisma/
+│   └── schema.prisma
+├── src/
+│   ├── controllers/
+│   │   ├── Auth/
+│   │   ├── Students/
+│   │   ├── WorkoutPlans/
+│   │   ├── Exercises/
+│   │   ├── Payments/
+│   │   └── Dashboard/
+│   ├── services/
+│   ├── middlewares/
+│   ├── schemas/          ← validação com Zod
+│   ├── routes.ts
+│   ├── app.ts
+│   └── server.ts
+├── .env.example
+└── package.json
+
+🗄️ Schema Prisma completo
+Baseado no seu padrão com Prisma + PostgreSQL:
+prisma// Enums
+enum Role {
+  ADMIN
+  PERSONAL
+  STUDENT
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  OVERDUE
+}
+
+enum PaymentStatus {
+  PAID
+  PENDING
+  OVERDUE
+}
+
+enum PlanType {
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+}
+
+// Models
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(PERSONAL)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student      Student?
+  workoutPlans WorkoutPlan[]
+}
+
+model Student {
+  id          String        @id @default(uuid())
+  userId      String        @unique
+  user        User          @relation(fields: [userId], references: [id])
+  phone       String?
+  birthDate   DateTime?
+  goal        String?
+  plan        PlanType      @default(MONTHLY)
+  status      StudentStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  payments    Payment[]
+  bodyRecords BodyRecord[]
+  workoutPlans WorkoutPlan[]
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  studentId   String
+  student     Student       @relation(fields: [studentId], references: [id])
+  amount      Decimal       @db.Decimal(10, 2)
+  dueDate     DateTime
+  paidAt      DateTime?
+  status      PaymentStatus @default(PENDING)
+  note        String?
+  createdAt   DateTime      @default(now())
+}
+
+model WorkoutPlan {
+  id          String     @id @default(uuid())
+  studentId   String
+  student     Student    @relation(fields: [studentId], references: [id])
+  createdById String
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  name        String
+  description String?
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  exercises   WorkoutExercise[]
+}
+
+model Exercise {
+  id           String   @id @default(uuid())
+  name         String
+  muscleGroup  String
+  description  String?
+  createdAt    DateTime @default(now())
+
+  workoutItems WorkoutExercise[]
+}
+
+model WorkoutExercise {
+  id            String      @id @default(uuid())
+  workoutPlanId String
+  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id])
+  exerciseId    String
+  exercise      Exercise    @relation(fields: [exerciseId], references: [id])
+  sets          Int
+  reps          String      // ex: "10-12" ou "até a falha"
+  load          String?     // ex: "20kg"
+  rest          String?     // ex: "60s"
+  order         Int
+}
+
+model BodyRecord {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  weight    Decimal? @db.Decimal(5, 2)
+  height    Decimal? @db.Decimal(4, 2)
+  bodyFat   Decimal? @db.Decimal(4, 2)
+  notes     String?
+  recordedAt DateTime @default(now())
+}
+```
+
+---
+
+## 🛣️ Endpoints
+
+**Auth**
+```
+POST /session         → login
+POST /users           → criar usuário (admin)
+GET  /me              → dados do usuário logado
+PUT  /me              → atualizar perfil
+PATCH /me/password    → trocar senha
+```
+
+**Alunos**
+```
+POST   /students          → cadastrar aluno
+GET    /students          → listar (com filtro status/plano)
+GET    /students/:id      → detalhe + pagamentos + fichas
+PUT    /students/:id      → editar
+DELETE /students/:id      → remover (ADMIN)
+GET    /students/overdue  → inadimplentes
+```
+
+**Pagamentos**
+```
+POST  /students/:id/payments       → registrar pagamento
+GET   /students/:id/payments       → histórico do aluno
+PATCH /payments/:id/status         → marcar como pago
+GET   /payments/upcoming           → vencendo em 7 dias
+```
+
+**Fichas de Treino**
+```
+POST   /students/:id/workout-plans        → criar ficha
+GET    /students/:id/workout-plans        → listar fichas do aluno
+GET    /workout-plans/:id                 → detalhe da ficha
+PUT    /workout-plans/:id                 → editar
+DELETE /workout-plans/:id                 → remover
+PATCH  /workout-plans/:id/activate        → ativar ficha
+```
+
+**Exercícios (banco de exercícios)**
+```
+POST   /exercises      → criar exercício
+GET    /exercises      → listar (com busca por nome/grupo muscular)
+PUT    /exercises/:id  → editar
+DELETE /exercises/:id  → remover
+```
+
+**Dashboard**
+```
+GET /dashboard/metrics   → total alunos, receita mês, inadimplentes, novos alunos

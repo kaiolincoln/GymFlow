@@ -1,0 +1,8 @@
+import 'dotenv/config'
+import { app } from './App'
+
+const PORT = process.env.PORT || 3333
+
+app.listen(PORT, () => {
+  console.log(`🏋️  GymFlow API rodando na porta ${PORT}`)
+})
