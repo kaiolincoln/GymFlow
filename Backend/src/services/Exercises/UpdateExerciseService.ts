@@ -1,14 +1,15 @@
-import  prismaClient  from '../../prisma/index';
+import prismaClient from '../../prisma/index';
 
 interface UpdateExerciseRequest {
   id: string
   name?: string
   muscleGroup?: string
   description?: string
+  gifUrl?: string
 }
 
 export class UpdateExerciseService {
-  async execute({ id, name, muscleGroup, description }: UpdateExerciseRequest) {
+  async execute({ id, name, muscleGroup, description, gifUrl }: UpdateExerciseRequest) {
     const exercise = await prismaClient.exercise.findUnique({ where: { id } })
 
     if (!exercise) {
@@ -17,7 +18,7 @@ export class UpdateExerciseService {
 
     const updated = await prismaClient.exercise.update({
       where: { id },
-      data: { name, muscleGroup, description },
+      data: { name, muscleGroup, description, gifUrl},
     })
 
     return updated

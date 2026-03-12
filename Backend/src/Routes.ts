@@ -3,42 +3,44 @@ import { rateLimit } from 'express-rate-limit'
 
 // Middlewares
 import { Authenticated } from './middlewares/Authenticated'
+import { isPersonal} from './middlewares/isPersonal'
 import { isAdmin } from './middlewares/isAdmin'
 
 // Controllers - Auth
+import { ChangePasswordController } from './controllers/Auth/ChangePasswordController'
+import { UpdateProfileController } from './controllers/Auth/UpdateProfileController'
 import { CreateUserController } from './controllers/Auth/CreateUserController'
 import { SessionController } from './controllers/Auth/SessionController'
 import { MeController } from './controllers/Auth/MeController'
-import { UpdateProfileController } from './controllers/Auth/UpdateProfileController'
-import { ChangePasswordController } from './controllers/Auth/ChangePasswordController'
 
 // Controllers - Students
+import { ListOverdueStudentsController } from './controllers/Students/ListOverdueStudentsController'
 import { CreateStudentController } from './controllers/Students/CreateStudentController'
+import { DeleteStudentController } from './controllers/Students/DeleteStudentController'
+import { UpdateStudentController } from './controllers/Students/UpdateStudentController'
 import { ListStudentsController } from './controllers/Students/ListStudentsController'
 import { GetStudentController } from './controllers/Students/GetStudentController'
-import { UpdateStudentController } from './controllers/Students/UpdateStudentController'
-import { DeleteStudentController } from './controllers/Students/DeleteStudentController'
-import { ListOverdueStudentsController } from './controllers/Students/ListOverdueStudentsController'
 
 // Controllers - Payments
-import { CreatePaymentController } from './controllers/Payments/CreatePaymentController'
 import { ListPaymentsByStudentController } from './controllers/Payments/ListPaymentsByStudentController'
-import { UpdatePaymentStatusController } from './controllers/Payments/UpdatePaymentStatusController'
 import { ListUpcomingPaymentsController } from './controllers/Payments/ListUpcomingPaymentsController'
+import { UpdatePaymentStatusController } from './controllers/Payments/UpdatePaymentStatusController'
+import { ListAllPaymentsController } from './controllers/Payments/ListAllPaymentsController'
+import { CreatePaymentController } from './controllers/Payments/CreatePaymentController'
 
 // Controllers - WorkoutPlans
-import { CreateWorkoutPlanController } from './controllers/WorkoutPlans/CreateWorkoutPlanController'
 import { ListWorkoutPlansByStudentController } from './controllers/WorkoutPlans/ListWorkoutPlansbyStudentController'
-import { GetWorkoutPlanController } from './controllers/WorkoutPlans/GetWorkoutPlanController'
+import { ActivateWorkoutPlanController } from './controllers/WorkoutPlans/ActivateWorkoutPlanController'
+import { CreateWorkoutPlanController } from './controllers/WorkoutPlans/CreateWorkoutPlanController'
 import { UpdateWorkoutPlanController } from './controllers/WorkoutPlans/UpdateWorkoutPlanController'
 import { DeleteWorkoutPlanController } from './controllers/WorkoutPlans/DeleteWorkoutPlanController'
-import { ActivateWorkoutPlanController } from './controllers/WorkoutPlans/ActivateWorkoutPlanController'
+import { GetWorkoutPlanController } from './controllers/WorkoutPlans/GetWorkoutPlanController'
 
 // Controllers - Exercises
 import { CreateExerciseController } from './controllers/Exercises/CreateExerciseController'
-import { ListExercisesController } from './controllers/Exercises/ListExercisesController'
 import { UpdateExerciseController } from './controllers/Exercises/UpdateExerciseController'
 import { DeleteExerciseController } from './controllers/Exercises/DeleteExerciseController'
+import { ListExercisesController } from './controllers/Exercises/ListExercisesController'
 
 import { DashboardMetricsController } from './controllers/Dashboard/DashBoardMetricsController'
 
@@ -79,6 +81,7 @@ routes.post('/students/:id/payments', new CreatePaymentController().handle)  // 
 routes.get('/students/:id/payments', new ListPaymentsByStudentController().handle)  // listagem de pagamentos de um aluno
 routes.patch('/payments/:id/status', new UpdatePaymentStatusController().handle)  // atualização do status de um pagamento
 routes.get('/payments/upcoming', new ListUpcomingPaymentsController().handle)  // listagem de pagamentos com vencimento nos próximos 7 dias
+routes.get('/payments', new ListAllPaymentsController().handle) // lista todos os pagamentos
 
 // Fichas de Treino
 routes.post('/students/:id/workout-plans', new CreateWorkoutPlanController().handle)  // criação de ficha de treino para um aluno

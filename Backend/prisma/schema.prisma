@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -101,6 +101,7 @@ model Exercise {
   name         String
   muscleGroup  String
   description  String?
+  gifUrl       String?
   createdAt    DateTime @default(now())
 
   workoutItems WorkoutExercise[]

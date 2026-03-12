@@ -1028,6 +1028,7 @@ export const ExerciseScalarFieldEnum = {
   name: 'name',
   muscleGroup: 'muscleGroup',
   description: 'description',
+  gifUrl: 'gifUrl',
   createdAt: 'createdAt'
 } as const
 

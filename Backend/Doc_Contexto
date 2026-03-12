@@ -1,117 +1,109 @@
-🏋️ Estrutura do Backend — GymFlow
-gymflow-backend/
-├── prisma/
-│   └── schema.prisma
-├── src/
-│   ├── controllers/
-│   │   ├── Auth/
-│   │   ├── Students/
-│   │   ├── WorkoutPlans/
-│   │   ├── Exercises/
-│   │   ├── Payments/
-│   │   └── Dashboard/
-│   ├── services/
-│   ├── middlewares/
-│   ├── schemas/          ← validação com Zod
-│   ├── routes.ts
-│   ├── app.ts
-│   └── server.ts
-├── .env.example
-└── package.json
+GymFlow — Backend (Documentação Técnica v2.0)
+Stack
+Node.js + Express + TypeScript + Prisma 7.4.2 + PostgreSQL (Neon) + JWT + Zod + bcryptjs + Helmet + CORS + express-rate-limit
+Padrão de Arquitetura (CRÍTICO)
 
-🗄️ Schema Prisma completo
-Baseado no seu padrão com Prisma + PostgreSQL:
-prisma// Enums
-enum Role {
-  ADMIN
-  PERSONAL
-  STUDENT
+Par por par: cada operação tem XxxController.ts + XxxService.ts
+Controller: valida req/res via Zod e chama o Service
+Service: contém toda a lógica de negócio, acessa prismaClient, lança AppError
+Middlewares nomeados: Authenticated, isAdmin, isPersonal
+
+
+Prisma Client (CRÍTICO — não alterar)
+typescriptimport "dotenv/config";
+import { PrismaClient } from "../generated/prisma/client"
+import { PrismaPg } from '@prisma/adapter-pg'
+const connectionString = `${process.env.DATABASE_URL}`;
+const adapter = new PrismaPg({ connectionString })
+const prismaClient = new PrismaClient({ adapter })
+export default prismaClient;
+prisma.config.ts
+typescriptimport "dotenv/config";
+import { defineConfig } from "prisma/config";
+export default defineConfig({
+  schema: "prisma/schema.prisma",
+  migrations: { path: "prisma/migrations" },
+  datasource: { url: process.env["DATABASE_URL"] },
+});
+⚠️ ATENÇÃO: O generator no schema.prisma deve usar provider = "prisma-client-js" (não "prisma-client"). Se novos campos não aparecerem no client gerado após o generate, deletar src/generated e rodar npx prisma generate novamente:
+powershellRemove-Item -Recurse -Force src\generated
+npx prisma generate
+Schema Prisma — COMPLETO E ATUAL
+prismagenerator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
-enum StudentStatus {
-  ACTIVE
-  INACTIVE
-  OVERDUE
+datasource db {
+  provider = "postgresql"
 }
 
-enum PaymentStatus {
-  PAID
-  PENDING
-  OVERDUE
-}
+enum Role { ADMIN PERSONAL STUDENT }
+enum StudentStatus { ACTIVE INACTIVE OVERDUE }
+enum PaymentStatus { PAID PENDING OVERDUE }
+enum PlanType { MONTHLY QUARTERLY SEMIANNUAL ANNUAL }
 
-enum PlanType {
-  MONTHLY
-  QUARTERLY
-  SEMIANNUAL
-  ANNUAL
-}
-
-// Models
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(PERSONAL)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role          @default(PERSONAL)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   student      Student?
   workoutPlans WorkoutPlan[]
 }
 
 model Student {
-  id          String        @id @default(uuid())
-  userId      String        @unique
-  user        User          @relation(fields: [userId], references: [id])
-  phone       String?
-  birthDate   DateTime?
-  goal        String?
-  plan        PlanType      @default(MONTHLY)
-  status      StudentStatus @default(ACTIVE)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  payments    Payment[]
-  bodyRecords BodyRecord[]
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id])
+  phone        String?
+  birthDate    DateTime?
+  goal         String?
+  plan         PlanType      @default(MONTHLY)
+  status       StudentStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  payments     Payment[]
+  bodyRecords  BodyRecord[]
   workoutPlans WorkoutPlan[]
 }
 
 model Payment {
-  id          String        @id @default(uuid())
-  studentId   String
-  student     Student       @relation(fields: [studentId], references: [id])
-  amount      Decimal       @db.Decimal(10, 2)
-  dueDate     DateTime
-  paidAt      DateTime?
-  status      PaymentStatus @default(PENDING)
-  note        String?
-  createdAt   DateTime      @default(now())
+  id        String        @id @default(uuid())
+  studentId String
+  student   Student       @relation(fields: [studentId], references: [id])
+  amount    Decimal       @db.Decimal(10, 2)
+  dueDate   DateTime
+  paidAt    DateTime?
+  status    PaymentStatus @default(PENDING)
+  note      String?
+  createdAt DateTime      @default(now())
 }
 
 model WorkoutPlan {
-  id          String     @id @default(uuid())
+  id          String            @id @default(uuid())
   studentId   String
-  student     Student    @relation(fields: [studentId], references: [id])
+  student     Student           @relation(fields: [studentId], references: [id])
   createdById String
-  createdBy   User       @relation(fields: [createdById], references: [id])
+  createdBy   User              @relation(fields: [createdById], references: [id])
   name        String
   description String?
-  active      Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
+  active      Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   exercises   WorkoutExercise[]
 }
 
 model Exercise {
-  id           String   @id @default(uuid())
+  id           String            @id @default(uuid())
   name         String
   muscleGroup  String
   description  String?
-  createdAt    DateTime @default(now())
-
+  gifUrl       String?
+  createdAt    DateTime          @default(now())
   workoutItems WorkoutExercise[]
 }
 
@@ -122,73 +114,142 @@ model WorkoutExercise {
   exerciseId    String
   exercise      Exercise    @relation(fields: [exerciseId], references: [id])
   sets          Int
-  reps          String      // ex: "10-12" ou "até a falha"
-  load          String?     // ex: "20kg"
-  rest          String?     // ex: "60s"
+  reps          String
+  load          String?
+  rest          String?
   order         Int
 }
 
 model BodyRecord {
-  id        String   @id @default(uuid())
-  studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
-  weight    Decimal? @db.Decimal(5, 2)
-  height    Decimal? @db.Decimal(4, 2)
-  bodyFat   Decimal? @db.Decimal(4, 2)
-  notes     String?
+  id         String   @id @default(uuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id])
+  weight     Decimal? @db.Decimal(5, 2)
+  height     Decimal? @db.Decimal(4, 2)
+  bodyFat    Decimal? @db.Decimal(4, 2)
+  notes      String?
   recordedAt DateTime @default(now())
 }
+Endpoints (27+ rotas)
+Auth (públicas)
+
+POST /session — login, retorna { token, user: { id, name, email, role, studentId } }
+POST /users — criar usuário
+
+Perfil (Authenticated)
+
+GET /me — retorna dados do usuário + studentId: user.student?.id ?? null
+PUT /me — atualizar perfil
+PATCH /me/password — trocar senha
+
+Alunos (Authenticated)
+
+POST /students — cadastrar aluno + gerar pagamentos automáticos
+GET /students — listar (filtros: status, plano)
+GET /students/:id — detalhe com fichas e pagamentos
+PUT /students/:id — editar
+DELETE /students/:id — remover [isAdmin]
+GET /students/overdue — inadimplentes
+
+Pagamentos (Authenticated)
+
+POST /students/:id/payments — registrar pagamento avulso
+GET /students/:id/payments — histórico do aluno
+GET /payments — listar todos com filtro ?status=
+PATCH /payments/:id/status — marcar PAID ou OVERDUE
+GET /payments/upcoming — vencendo em 7 dias
+
+Fichas de Treino (Authenticated)
+
+POST /students/:id/workout-plans — criar ficha
+GET /students/:id/workout-plans — listar fichas do aluno
+GET /workout-plans/:id — detalhe com exercícios
+PUT /workout-plans/:id — editar
+DELETE /workout-plans/:id — remover
+PATCH /workout-plans/:id/activate — ativar (desativa as demais)
+
+Exercícios (Authenticated / isAdmin para write)
+
+POST /exercises — criar com gifUrl [isAdmin]
+GET /exercises — listar (busca por nome/grupo muscular)
+PUT /exercises/:id — editar [isAdmin]
+DELETE /exercises/:id — remover [isAdmin]
+
+Dashboard (Authenticated)
+
+GET /dashboard/metrics — total alunos, receita mês, inadimplentes, novos alunos
+
+Lógica de Negócio
+Pagamentos automáticos ao cadastrar aluno:
+
+MONTHLY: 1x R$99,90
+QUARTERLY: 3x R$89,97
+SEMIANNUAL: 6x R$83,32
+ANNUAL: 12x R$74,99
+Todos com status PENDING, vencimento dia 1 de cada mês
+
+SessionService — retorna studentId:
+typescriptreturn { token, user: { id, name, email, role, studentId: user.student?.id ?? null } }
+MeService — retorna studentId:
+typescriptselect: { id, name, email, role, createdAt, student: { select: { id: true } } }
+return { ...user, studentId: user.student?.id ?? null }
 ```
 
----
+**Ativação de ficha:** PATCH /workout-plans/:id/activate desativa todas as outras fichas do aluno antes de ativar a nova.
 
-## 🛣️ Endpoints
+## Permissões por Role
+- ADMIN: acesso total
+- PERSONAL: tudo exceto deletar alunos e gerenciar exercícios
+- STUDENT: apenas /minha-area (área do aluno)
 
-**Auth**
+## Estrutura de Pastas
 ```
-POST /session         → login
-POST /users           → criar usuário (admin)
-GET  /me              → dados do usuário logado
-PUT  /me              → atualizar perfil
-PATCH /me/password    → trocar senha
-```
-
-**Alunos**
-```
-POST   /students          → cadastrar aluno
-GET    /students          → listar (com filtro status/plano)
-GET    /students/:id      → detalhe + pagamentos + fichas
-PUT    /students/:id      → editar
-DELETE /students/:id      → remover (ADMIN)
-GET    /students/overdue  → inadimplentes
-```
-
-**Pagamentos**
-```
-POST  /students/:id/payments       → registrar pagamento
-GET   /students/:id/payments       → histórico do aluno
-PATCH /payments/:id/status         → marcar como pago
-GET   /payments/upcoming           → vencendo em 7 dias
-```
-
-**Fichas de Treino**
-```
-POST   /students/:id/workout-plans        → criar ficha
-GET    /students/:id/workout-plans        → listar fichas do aluno
-GET    /workout-plans/:id                 → detalhe da ficha
-PUT    /workout-plans/:id                 → editar
-DELETE /workout-plans/:id                 → remover
-PATCH  /workout-plans/:id/activate        → ativar ficha
-```
-
-**Exercícios (banco de exercícios)**
-```
-POST   /exercises      → criar exercício
-GET    /exercises      → listar (com busca por nome/grupo muscular)
-PUT    /exercises/:id  → editar
-DELETE /exercises/:id  → remover
+Backend/
+├── prisma/
+│   ├── schema.prisma
+│   ├── migrations/
+│   └── prisma.config.ts
+├── src/
+│   ├── generated/prisma/        ← NÃO editar manualmente
+│   ├── prisma/index.ts          ← PrismaClient com PrismaPg adapter
+│   ├── controllers/
+│   │   ├── Auth/
+│   │   ├── Dashboard/
+│   │   ├── Exercises/
+│   │   ├── Payments/
+│   │   ├── Students/
+│   │   └── WorkoutPlans/
+│   ├── services/
+│   │   ├── Auth/
+│   │   ├── Dashboard/
+│   │   ├── Exercises/
+│   │   ├── Payments/
+│   │   ├── Students/
+│   │   └── WorkoutPlans/
+│   ├── middlewares/
+│   │   ├── Authenticated.ts
+│   │   ├── isAdmin.ts
+│   │   └── isPersonal.ts
+│   ├── schemas/
+│   ├── routes.ts
+│   ├── App.ts
+│   └── server.ts                ← Porta 3333
+├── .env
+└── package.json
 ```
 
-**Dashboard**
+## Variáveis de Ambiente (.env)
 ```
-GET /dashboard/metrics   → total alunos, receita mês, inadimplentes, novos alunos
+DATABASE_URL="postgresql://..."
+JWT_SECRET="gymflow-super-secret-2026"
+PORT=3333
+Status do Backend
+✅ Autenticação JWT completa
+✅ CRUD Alunos completo
+✅ Pagamentos automáticos ao cadastrar
+✅ CRUD Pagamentos + filtros + GET /payments global
+✅ CRUD Fichas de Treino + ativação
+✅ CRUD Exercícios com gifUrl
+✅ Dashboard de métricas
+✅ Middlewares de role (isAdmin, isPersonal)
+✅ GET /students/overdue e GET /payments/upcoming

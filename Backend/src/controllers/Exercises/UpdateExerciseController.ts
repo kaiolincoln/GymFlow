@@ -3,9 +3,10 @@ import { z } from 'zod'
 import { UpdateExerciseService } from '../../services/Exercises/UpdateExerciseService'
 
 const updateExerciseSchema = z.object({
-  name: z.string().min(2).optional(),
+  name:        z.string().min(2).optional(),
   muscleGroup: z.string().min(2).optional(),
   description: z.string().optional(),
+  gifUrl:      z.string().url().optional(),
 })
 
 export class UpdateExerciseController {
