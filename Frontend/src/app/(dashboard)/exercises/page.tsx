@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Play } from 'lucide-react'
+import { Plus, Search, X } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -15,10 +15,58 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { exercisesService } from '@/services/exercises.service'
 import { Exercise } from '@/types'
 
+const muscleGroupMap: Record<string, string> = {
+  'peito':       'chest',
+  'costas':      'back',
+  'ombros':      'shoulders',
+  'biceps':      'upper arms',
+  'bíceps':      'upper arms',
+  'triceps':     'upper arms',
+  'tríceps':     'upper arms',
+  'pernas':      'upper legs',
+  'abdomen':     'waist',
+  'abdômen':     'waist',
+  'gluteos':     'glutes',
+  'glúteos':     'glutes',
+  'panturrilha': 'lower legs',
+  'antebraço':   'lower arms',
+}
+
+function translateToEnglish(term: string): string {
+  const lower = term.toLowerCase()
+  for (const [pt, en] of Object.entries(muscleGroupMap)) {
+    if (lower.includes(pt)) return en
+  }
+  return term
+}
+
+async function searchGifs(query: string): Promise<any[]> {
+  if (!query || query.length < 2) return []
+  const translated = translateToEnglish(query)
+  const key = process.env.NEXT_PUBLIC_RAPIDAPI_KEY!
+
+  // Tenta por nome
+  const byName = await fetch(
+    `https://exercisedb.p.rapidapi.com/exercises/name/${encodeURIComponent(translated)}?limit=10`,
+    { headers: { 'X-RapidAPI-Key': key, 'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com' } }
+  )
+  const nameData = await byName.json()
+  if (Array.isArray(nameData) && nameData.length > 0) return nameData
+
+  // Fallback por bodyPart
+  const byPart = await fetch(
+    `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${encodeURIComponent(translated)}?limit=10`,
+    { headers: { 'X-RapidAPI-Key': key, 'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com' } }
+  )
+  const partData = await byPart.json()
+  return Array.isArray(partData) ? partData : []
+}
+
 const createExerciseSchema = z.object({
   name:        z.string().min(2, 'Nome obrigatório'),
   muscleGroup: z.string().min(2, 'Grupo muscular obrigatório'),
   description: z.string().optional(),
+  gifUrl:      z.string().optional(),
 })
 
 type CreateExerciseForm = z.infer<typeof createExerciseSchema>
@@ -28,79 +76,14 @@ const muscleGroups = [
   'Tríceps', 'Pernas', 'Abdômen', 'Glúteos', 'Panturrilha'
 ]
 
-// Mapeia grupo muscular PT → nome em inglês para a ExerciseDB
-const muscleGroupMap: Record<string, string> = {
-  'Peito':       'chest',
-  'Costas':      'back',
-  'Ombros':      'shoulders',
-  'Bíceps':      'upper arms',
-  'Tríceps':     'upper arms',
-  'Pernas':      'upper legs',
-  'Abdômen':     'waist',
-  'Glúteos':     'glutes',
-  'Panturrilha': 'lower legs',
-}
-
-async function fetchExerciseGif(exerciseName: string, muscleGroup: string): Promise<string | null> {
-  try {
-    const bodyPart = muscleGroupMap[muscleGroup] ?? 'chest'
-    const res = await fetch(
-      `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${encodeURIComponent(bodyPart)}?limit=100`,
-      {
-        headers: {
-          'X-RapidAPI-Key': process.env.NEXT_PUBLIC_RAPIDAPI_KEY!,
-          'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
-        },
-      }
-    )
-    const data = await res.json()
-    const normalized = exerciseName.toLowerCase()
-    const match = data.find((ex: any) =>
-      ex.name.toLowerCase().includes(normalized) ||
-      normalized.includes(ex.name.toLowerCase().split(' ')[0])
-    )
-    return match?.gifUrl ?? data[0]?.gifUrl ?? null
-  } catch {
-    return null
-  }
-}
-
-function ExerciseGif({ name, muscleGroup }: { name: string; muscleGroup: string }) {
-  const { data: gifUrl, isLoading } = useQuery({
-    queryKey: ['exercise-gif', name, muscleGroup],
-    queryFn: () => fetchExerciseGif(name, muscleGroup),
-    staleTime: 1000 * 60 * 60, // cache 1 hora
-  })
-
-  if (isLoading) {
-    return (
-      <div className="w-16 h-16 rounded-lg bg-muted animate-pulse flex items-center justify-center">
-        <Play size={16} className="text-muted-foreground" />
-      </div>
-    )
-  }
-
-  if (!gifUrl) {
-    return (
-      <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
-        <Play size={16} className="text-muted-foreground" />
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src={gifUrl}
-      alt={name}
-      className="w-16 h-16 rounded-lg object-cover"
-    />
-  )
-}
-
 export default function ExercisesPage() {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
+  const [gifSearch, setGifSearch] = useState('')
+  const [gifResults, setGifResults] = useState<any[]>([])
+  const [selectedGif, setSelectedGif] = useState<string | null>(null)
+  const [isSearchingGif, setIsSearchingGif] = useState(false)
   const queryClient = useQueryClient()
 
   const { data: exercises, isLoading } = useQuery({
@@ -108,7 +91,7 @@ export default function ExercisesPage() {
     queryFn: () => exercisesService.list({ search }),
   })
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateExerciseForm>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateExerciseForm>({
     resolver: zodResolver(createExerciseSchema),
   })
 
@@ -117,9 +100,25 @@ export default function ExercisesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] })
       reset()
+      setSelectedGif(null)
+      setGifResults([])
+      setGifSearch('')
       setOpen(false)
     },
   })
+
+  async function handleGifSearch() {
+    if (!gifSearch) return
+    setIsSearchingGif(true)
+    const results = await searchGifs(gifSearch)
+    setGifResults(results)
+    setIsSearchingGif(false)
+  }
+
+  function handleSelectGif(gifUrl: string) {
+    setSelectedGif(gifUrl)
+    setValue('gifUrl', gifUrl)
+  }
 
   return (
     <div>
@@ -144,9 +143,7 @@ export default function ExercisesPage() {
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="h-20" />
-            </Card>
+            <Card key={i} className="animate-pulse"><CardContent className="h-20" /></Card>
           ))}
         </div>
       ) : (
@@ -158,14 +155,16 @@ export default function ExercisesPage() {
               onClick={() => setSelectedExercise(exercise)}
             >
               <CardContent className="p-4 flex items-center gap-4">
-                <ExerciseGif name={exercise.name} muscleGroup={exercise.muscleGroup} />
+                {exercise.gifUrl ? (
+                  <img src={exercise.gifUrl} alt={exercise.name} className="w-16 h-16 rounded-lg object-cover" />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs text-center">
+                    Sem GIF
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{exercise.name}</p>
-                  <Badge
-                    variant="outline"
-                    className="mt-1 text-xs"
-                    style={{ borderColor: '#F97316', color: '#F97316' }}
-                  >
+                  <Badge variant="outline" className="mt-1 text-xs" style={{ borderColor: '#F97316', color: '#F97316' }}>
                     {exercise.muscleGroup}
                   </Badge>
                   {exercise.description && (
@@ -176,14 +175,12 @@ export default function ExercisesPage() {
             </Card>
           ))}
           {exercises?.length === 0 && (
-            <div className="col-span-3 p-8 text-center text-muted-foreground">
-              Nenhum exercício encontrado.
-            </div>
+            <div className="col-span-3 p-8 text-center text-muted-foreground">Nenhum exercício encontrado.</div>
           )}
         </div>
       )}
 
-      {/* Modal detalhe do exercício com GIF grande */}
+      {/* Modal detalhe */}
       <Dialog open={!!selectedExercise} onOpenChange={() => setSelectedExercise(null)}>
         {selectedExercise && (
           <DialogContent className="max-w-sm bg-white">
@@ -191,13 +188,17 @@ export default function ExercisesPage() {
               <DialogTitle className="text-gray-900">{selectedExercise.name}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col items-center gap-4">
-              <ExerciseGif name={selectedExercise.name} muscleGroup={selectedExercise.muscleGroup} />
+              {selectedExercise.gifUrl ? (
+                <img src={selectedExercise.gifUrl} alt={selectedExercise.name} className="w-48 h-48 rounded-xl object-cover" />
+              ) : (
+                <div className="w-48 h-48 rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
+                  Sem GIF
+                </div>
+              )}
               <div className="w-full space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Grupo muscular:</span>
-                  <Badge style={{ backgroundColor: '#F97316', color: 'white' }}>
-                    {selectedExercise.muscleGroup}
-                  </Badge>
+                  <Badge style={{ backgroundColor: '#F97316', color: 'white' }}>{selectedExercise.muscleGroup}</Badge>
                 </div>
                 {selectedExercise.description && (
                   <p className="text-sm text-gray-700">{selectedExercise.description}</p>
@@ -209,38 +210,93 @@ export default function ExercisesPage() {
       </Dialog>
 
       {/* Modal Novo Exercício */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md bg-white">
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { reset(); setSelectedGif(null); setGifResults([]) } }}>
+        <DialogContent className="max-w-lg bg-white">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Novo Exercício</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit((d) => createExercise(d))} className="space-y-4">
+          <form onSubmit={handleSubmit((d) => createExercise({ ...d, gifUrl: selectedGif ?? undefined }))} className="space-y-4">
+
             <div className="space-y-1.5">
               <Label className="text-gray-700 font-semibold">Nome</Label>
               <Input placeholder="Ex: Supino Reto" {...register('name')} className="border-gray-300" />
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
             </div>
+
             <div className="space-y-1.5">
               <Label className="text-gray-700 font-semibold">Grupo Muscular</Label>
-              <Input
-                placeholder="Ex: Peito"
-                list="muscle-groups"
-                {...register('muscleGroup')}
-                className="border-gray-300"
-              />
+              <Input placeholder="Ex: Peito" list="muscle-groups" {...register('muscleGroup')} className="border-gray-300" />
               <datalist id="muscle-groups">
                 {muscleGroups.map((g) => <option key={g} value={g} />)}
               </datalist>
               {errors.muscleGroup && <p className="text-xs text-red-500">{errors.muscleGroup.message}</p>}
             </div>
+
             <div className="space-y-1.5">
-              <Label className="text-gray-700 font-semibold">
-                Descrição <span className="text-gray-400 font-normal">(opcional)</span>
-              </Label>
+              <Label className="text-gray-700 font-semibold">Descrição <span className="font-normal text-gray-400">(opcional)</span></Label>
               <Input placeholder="Ex: Exercício para peitoral com barra" {...register('description')} className="border-gray-300" />
             </div>
+
+            {/* Seletor de GIF */}
+            <div className="space-y-2 border-t pt-3">
+              <Label className="text-gray-700 font-semibold">GIF do exercício</Label>
+
+              {selectedGif && (
+                <div className="relative w-fit">
+                  <img src={selectedGif} alt="GIF selecionado" className="w-24 h-24 rounded-lg object-cover border-2 border-orange-400" />
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedGif(null); setValue('gifUrl', '') }}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Buscar GIF (ex: supino, agachamento...)"
+                  value={gifSearch}
+                  onChange={(e) => setGifSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleGifSearch())}
+                  className="border-gray-300"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGifSearch}
+                  disabled={isSearchingGif}
+                  className="shrink-0"
+                >
+                  {isSearchingGif ? '...' : 'Buscar'}
+                </Button>
+              </div>
+
+              {gifResults.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                  {gifResults.map((ex) => (
+                    <button
+                      key={ex.id}
+                      type="button"
+                      onClick={() => handleSelectGif(ex.gifUrl)}
+                      className="rounded-lg overflow-hidden border-2 transition-all"
+                      style={{ borderColor: selectedGif === ex.gifUrl ? '#F97316' : 'transparent' }}
+                      title={ex.name}
+                    >
+                      <img src={ex.gifUrl} alt={ex.name} className="w-full h-16 object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {gifResults.length === 0 && gifSearch && !isSearchingGif && (
+                <p className="text-xs text-muted-foreground">Nenhum GIF encontrado. Tente outro termo.</p>
+              )}
+            </div>
+
             <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" className="flex-1 border-gray-300" onClick={() => { reset(); setOpen(false) }}>
+              <Button type="button" variant="outline" className="flex-1 border-gray-300" onClick={() => { reset(); setSelectedGif(null); setGifResults([]); setOpen(false) }}>
                 Cancelar
               </Button>
               <Button type="submit" className="flex-1 text-white" style={{ backgroundColor: '#F97316' }} disabled={isPending}>

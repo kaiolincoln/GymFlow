@@ -99,6 +99,7 @@ export interface Exercise {
   name: string
   muscleGroup: string
   description?: string
+  gifUrl?: string
   createdAt: string
 }
 
