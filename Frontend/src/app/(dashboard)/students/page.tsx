@@ -1,21 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Plus, Search, User, Mail, Lock, Phone, Target, CreditCard, Calendar } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, User, Mail, Lock, Phone, Target, CreditCard } from 'lucide-react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useRouter } from 'next/navigation'
+import { studentsService } from '@/services/students.service'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { studentsService } from '@/services/students.service'
+import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
 import { Student } from '@/types'
+import { useState } from 'react'
+import { z } from 'zod'
 
 const statusLabel: Record<string, { label: string; color: string }> = {
   ACTIVE:   { label: 'Ativo',        color: '#22C55E' },
@@ -31,12 +31,13 @@ const planLabel: Record<string, string> = {
 }
 
 const createStudentSchema = z.object({
-  name:     z.string().min(2, 'Nome obrigatório'),
-  email:    z.string().email('Email inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
-  phone:    z.string().optional(),
-  goal:     z.string().optional(),
-  plan:     z.enum(['MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL']),
+  name:      z.string().min(2, 'Nome obrigatório'),
+  email:     z.string().email('Email inválido'),
+  password:  z.string().min(6, 'Mínimo 6 caracteres'),
+  phone:     z.string().optional(),
+  goal:      z.string().optional(),
+  birthDate: z.string().optional(),
+  plan:      z.enum(['MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL']),
 })
 
 type CreateStudentForm = z.infer<typeof createStudentSchema>
@@ -46,12 +47,12 @@ function FieldGroup({ icon: Icon, label, error, children }: {
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="flex items-center gap-1.5 text-sm font-semibold text-white/80">
+      <Label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
         <Icon size={14} style={{ color: '#F97316' }} />
         {label}
       </Label>
       {children}
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   )
 }
@@ -156,12 +157,9 @@ export default function StudentsPage() {
 
       {/* Modal Novo Aluno */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
-          className="max-w-md border-0 shadow-2xl"
-          style={{ backgroundColor: '#1C1C1E', color: '#F5F5F5' }}
-        >
-          <DialogHeader className="pb-2 border-b border-white/10">
-            <DialogTitle className="flex items-center gap-2 text-white text-lg">
+        <DialogContent className="max-w-md bg-white shadow-2xl">
+          <DialogHeader className="pb-2 border-b">
+            <DialogTitle className="flex items-center gap-2 text-gray-900 text-lg">
               <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F97316' }}>
                 <User size={14} color="white" />
               </div>
@@ -173,72 +171,47 @@ export default function StudentsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <FieldGroup icon={User} label="Nome completo" error={errors.name?.message}>
-                  <Input
-                    placeholder="João Silva"
-                    {...register('name')}
-                    className="border-white/20 text-white placeholder:text-white/30"
-                    style={{ backgroundColor: '#2C2C2E' }}
-                  />
+                  <Input placeholder="João Silva" {...register('name')} className="border-gray-300 text-gray-900" />
                 </FieldGroup>
               </div>
               <div className="col-span-2">
                 <FieldGroup icon={Mail} label="Email" error={errors.email?.message}>
-                  <Input
-                    type="email"
-                    placeholder="joao@email.com"
-                    {...register('email')}
-                    className="border-white/20 text-white placeholder:text-white/30"
-                    style={{ backgroundColor: '#2C2C2E' }}
-                  />
+                  <Input type="email" placeholder="joao@email.com" {...register('email')} className="border-gray-300 text-gray-900" />
                 </FieldGroup>
               </div>
               <div className="col-span-2">
                 <FieldGroup icon={Lock} label="Senha" error={errors.password?.message}>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    {...register('password')}
-                    className="border-white/20 text-white placeholder:text-white/30"
-                    style={{ backgroundColor: '#2C2C2E' }}
-                  />
+                  <Input type="password" placeholder="••••••••" {...register('password')} className="border-gray-300 text-gray-900" />
+                </FieldGroup>
+              </div>
+              <div className="col-span-2">
+                <FieldGroup icon={Calendar} label="Data de Nascimento">
+                  <Input type="date" {...register('birthDate')} className="border-gray-300 text-gray-900" />
                 </FieldGroup>
               </div>
               <div>
                 <FieldGroup icon={Phone} label="Telefone">
-                  <Input
-                    placeholder="(11) 99999-9999"
-                    {...register('phone')}
-                    className="border-white/20 text-white placeholder:text-white/30"
-                    style={{ backgroundColor: '#2C2C2E' }}
-                  />
+                  <Input placeholder="(11) 99999-9999" {...register('phone')} className="border-gray-300 text-gray-900" />
                 </FieldGroup>
               </div>
               <div>
                 <FieldGroup icon={CreditCard} label="Plano">
                   <Select defaultValue="MONTHLY" onValueChange={(val) => setValue('plan', val as any)}>
-                    <SelectTrigger
-                      className="border-white/20 text-white"
-                      style={{ backgroundColor: '#2C2C2E' }}
-                    >
+                    <SelectTrigger className="border-gray-300 text-gray-900 bg-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent style={{ backgroundColor: '#2C2C2E', borderColor: '#3A3A3C' }}>
-                      <SelectItem value="MONTHLY" className="text-white">Mensal</SelectItem>
-                      <SelectItem value="QUARTERLY" className="text-white">Trimestral</SelectItem>
-                      <SelectItem value="SEMIANNUAL" className="text-white">Semestral</SelectItem>
-                      <SelectItem value="ANNUAL" className="text-white">Anual</SelectItem>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="MONTHLY">Mensal</SelectItem>
+                      <SelectItem value="QUARTERLY">Trimestral</SelectItem>
+                      <SelectItem value="SEMIANNUAL">Semestral</SelectItem>
+                      <SelectItem value="ANNUAL">Anual</SelectItem>
                     </SelectContent>
                   </Select>
                 </FieldGroup>
               </div>
               <div className="col-span-2">
                 <FieldGroup icon={Target} label="Objetivo">
-                  <Input
-                    placeholder="Ex: Hipertrofia, emagrecimento..."
-                    {...register('goal')}
-                    className="border-white/20 text-white placeholder:text-white/30"
-                    style={{ backgroundColor: '#2C2C2E' }}
-                  />
+                  <Input placeholder="Ex: Hipertrofia, emagrecimento..." {...register('goal')} className="border-gray-300 text-gray-900" />
                 </FieldGroup>
               </div>
             </div>
@@ -247,8 +220,7 @@ export default function StudentsPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="flex-1 border-white/20 text-white hover:bg-white/10"
-                style={{ backgroundColor: 'transparent' }}
+                className="flex-1 border-gray-300 text-gray-700"
                 onClick={() => { reset(); setOpen(false) }}
               >
                 Cancelar
