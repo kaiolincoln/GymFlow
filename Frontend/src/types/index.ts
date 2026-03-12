@@ -1,3 +1,4 @@
+import { Student } from './index';
 
 // ─── Auth ───────────────────────────────────────────────────
 export interface User {
@@ -5,7 +6,8 @@ export interface User {
   name: string
   email: string
   role: 'ADMIN' | 'PERSONAL' | 'STUDENT'
-  createdAt: string
+  studentId?: string  
+  createdAt?: string
 }
 
 export interface SessionResponse {

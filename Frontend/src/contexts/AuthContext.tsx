@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
-import { User } from '@/types'
+import { SessionResponse, User } from '@/types'
 
 interface AuthContextData {
   user: User | null
@@ -32,13 +32,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function signIn(email: string, password: string) {
-    const { data } = await api.post('/session', { email, password })
+    const response = await api.post<SessionResponse>('/session', { email, password })
+    const { token, user } = response.data
 
-    localStorage.setItem('@gymflow:token', data.token)
-    localStorage.setItem('@gymflow:user', JSON.stringify(data.user))
+    alert(`Role: ${user.role} | StudentId: ${user.studentId}`)
 
-    setUser(data.user)
-    router.push('/dashboard')
+    localStorage.setItem('@gymflow:token', token)
+    localStorage.setItem('@gymflow:user', JSON.stringify(user))
+
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    setUser(user)
+
+    if (user.role === 'STUDENT') {
+      router.push('/minha-area')
+    } else {
+      router.push('/dashboard')
+    }
   }
 
   function signOut() {
