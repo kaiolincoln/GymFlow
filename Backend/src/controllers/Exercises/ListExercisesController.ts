@@ -1,16 +1,15 @@
-import { Request, Response } from 'express'
-import { ListExercisesService } from '../../services/Exercises/ListExercisesService'
+import { Request, Response } from "express";
+import { ListExercisesService } from "../../services/Exercises/ListExercisesService";
 
-export class ListExercisesController {
+class ListExercisesController {
   async handle(req: Request, res: Response) {
-    const { search, muscleGroup } = req.query
-    const service = new ListExercisesService()
 
-    const exercises = await service.execute({
-      search: search as string,
-      muscleGroup: muscleGroup as string,
-    })
+    const service = new ListExercisesService();
 
-    return res.json(exercises)
+    const exercises = await service.execute();
+
+    return res.json(exercises);
   }
 }
+
+export { ListExercisesController };

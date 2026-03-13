@@ -1,20 +1,20 @@
-import  prismaClient  from '../../prisma/index';
+import prismaClient from "../../prisma";
 
-interface ListExercisesRequest {
-  search?: string
-  muscleGroup?: string
-}
+class ListExercisesService {
+  async execute() {
 
-export class ListExercisesService {
-  async execute({ search, muscleGroup }: ListExercisesRequest) {
     const exercises = await prismaClient.exercise.findMany({
-      where: {
-        muscleGroup: muscleGroup ? { equals: muscleGroup, mode: 'insensitive' } : undefined,
-        name: search ? { contains: search, mode: 'insensitive' } : undefined,
-      },
-      orderBy: { name: 'asc' },
-    })
+      select: {
+        id: true,
+        name: true,
+        muscleGroup: true,
+        description: true,
+        gifUrl: true
+      }
+    });
 
-    return exercises
+    return exercises;
   }
 }
+
+export { ListExercisesService };
