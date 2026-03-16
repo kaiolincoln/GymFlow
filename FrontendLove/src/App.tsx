@@ -8,12 +8,12 @@ import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Students from "@/pages/Students";
-import StudentDetail from "@/pages/StudentDetail";
+import StudentDetail from "@/pages/StudentDetail/StudentDetail";
 import Payments from "@/pages/Payments";
-import WorkoutPlans from "@/pages/WorkoutPlans";
+import WorkoutPlans from "@/pages/WorkoutPlans/WorkoutPlans";
 import Exercises from "@/pages/Exercises";
 import Profile from "@/pages/Profile";
-import StudentArea from "@/pages/StudentArea";
+import StudentArea from "@/pages/StudentArea/StudentArea";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();

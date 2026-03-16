@@ -1,36 +1,17 @@
-import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Student, StudentsResponse } from "@/lib/types";
+import { Plus, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Plus, Search, Eye } from "lucide-react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 const statusMap = {
   ACTIVE: { label: "Ativo", variant: "default" as const },
@@ -66,7 +47,6 @@ export default function Students() {
     const params = statusFilter !== "ALL" ? `?status=${statusFilter}` : "";
     api.get<StudentsResponse | Student[]>(`/students${params}`)
       .then((data) => {
-        // backend pode retornar array direto ou objeto paginado
         if (Array.isArray(data)) {
           setStudents(data);
         } else {
