@@ -45,8 +45,16 @@ export interface WorkoutPlan {
   active: boolean;
   createdAt: string;
   updatedAt: string;
-  exercises?: WorkoutExercise[];
+  days?: WorkoutDay[];
   student?: { user: { name: string } };
+}
+
+export interface WorkoutDay {
+  id: string;
+  workoutPlanId: string;
+  label: string;  
+  order: number;
+  exercises: WorkoutExercise[];
 }
 
 export interface Exercise {
@@ -79,6 +87,11 @@ export interface BodyRecord {
   recordedAt: string;
 }
 
+export interface MonthlyDataPoint {
+  month: string;
+  revenue: number;
+  newStudents: number;
+}
 
 export interface DashboardMetrics {
   totalActive: number;
@@ -86,6 +99,7 @@ export interface DashboardMetrics {
   newStudentsThisMonth: number;
   revenueThisMonth: number;
   revenueLastMonth: number;
+  monthlyData: MonthlyDataPoint[];
 }
 
 export interface StudentsResponse {
@@ -93,4 +107,41 @@ export interface StudentsResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  roomId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: string;
+  content: string;
+  createdAt: string;
+}
+ 
+export interface WorkoutTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  createdById: string;
+  createdByName: string;
+  days: WorkoutTemplateDay[];
+  createdAt: string;
+}
+ 
+export interface WorkoutTemplateDay {
+  label: string;
+  order: number;
+  exercises: WorkoutTemplateExercise[];
+}
+ 
+export interface WorkoutTemplateExercise {
+  exerciseId: string;
+  exerciseName: string;
+  muscleGroup: string;
+  sets: number;
+  reps: string;
+  load?: string;
+  rest?: string;
+  order: number;
 }
