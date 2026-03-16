@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { z } from 'zod'
 import { CreateWorkoutPlanService } from '../../services/WorkoutPlans/CreateWorkoutPlanService'
 
-const workoutExerciseSchema = z.object({
+const exerciseSchema = z.object({
   exerciseId: z.string().uuid(),
   sets: z.number().int().positive(),
   reps: z.string(),
@@ -11,10 +11,16 @@ const workoutExerciseSchema = z.object({
   order: z.number().int(),
 })
 
+const daySchema = z.object({
+  label: z.string().min(1),
+  order: z.number().int(),
+  exercises: z.array(exerciseSchema).default([]),
+})
+
 const createWorkoutPlanSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
-  exercises: z.array(workoutExerciseSchema).optional(),
+  days: z.array(daySchema).default([]),
 })
 
 export class CreateWorkoutPlanController {

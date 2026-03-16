@@ -42,10 +42,20 @@ import { UpdateExerciseController } from './controllers/Exercises/UpdateExercise
 import { DeleteExerciseController } from './controllers/Exercises/DeleteExerciseController'
 import { ListExercisesController } from './controllers/Exercises/ListExercisesController'
 
+// Controllers - BodyRecords
+import { CreateBodyRecordController } from './controllers/BodyRecords/CreateBodyRecordController'
+import { ListBodyRecordsController } from './controllers/BodyRecords/ListBodyRecordsController'
+
+// Controller - Chat
+import { WorkoutTemplateController } from './controllers/WorkoutTemplates/WorkoutTemplateController'
+import { ChatController } from './controllers/Chat/ChatController'
+
 import { DashboardMetricsController } from './controllers/Dashboard/DashBoardMetricsController'
 
 export const routes = Router()
 
+const chatController = new ChatController()
+const templateController = new WorkoutTemplateController()
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -96,3 +106,19 @@ routes.post('/exercises', isAdmin, new CreateExerciseController().handle)  // cr
 routes.get('/exercises', new ListExercisesController().handle)  // listagem de exercícios
 routes.put('/exercises/:id', isAdmin, new UpdateExerciseController().handle)  // atualização de dados de um exercício (apenas admin)
 routes.delete('/exercises/:id', isAdmin, new DeleteExerciseController().handle)  // exclusão de exercício (apenas admin)
+
+// Bory records
+routes.post('/students/:id/body-records', new CreateBodyRecordController().handle) 
+routes.get('/students/:id/body-records', new ListBodyRecordsController().handle)
+
+// Chat (Personal ↔ Aluno por sala = studentId)
+routes.get('/chat/:studentId/stream', (req, res) => chatController.stream(req, res))
+routes.post('/chat/:studentId/messages', (req, res) => chatController.sendMessage(req, res))
+routes.get('/chat/:studentId/messages', (req, res) => chatController.getMessages(req, res))
+ 
+// Templates de Fichas
+routes.get('/workout-templates', (req, res) => templateController.list(req, res))
+routes.post('/workout-templates', (req, res) => templateController.create(req, res))
+routes.post('/workout-templates/from-plan/:planId', (req, res) => templateController.createFromPlan(req, res))
+routes.get('/workout-templates/:id', (req, res) => templateController.get(req, res))
+routes.delete('/workout-templates/:id', (req, res) => templateController.delete(req, res))

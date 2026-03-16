@@ -1,23 +1,26 @@
-import  prismaClient  from '../../prisma/index';
+import prismaClient from '../../prisma/index';
+import { AppError } from '../../errors/AppError'; 
 
 export class GetWorkoutPlanService {
   async execute(id: string) {
     const plan = await prismaClient.workoutPlan.findUnique({
       where: { id },
       include: {
-        exercises: {
-          include: { exercise: true },
+        student: { include: { user: true } },
+        days: {
           orderBy: { order: 'asc' },
+          include: {
+            exercises: {
+              orderBy: { order: 'asc' },
+              include: { exercise: true },
+            },
+          },
         },
-        createdBy: { select: { name: true } },
-        student: { include: { user: { select: { name: true } } } },
       },
-    })
+    });
 
-    if (!plan) {
-      throw new Error('Ficha não encontrada.')
-    }
+    if (!plan) throw new AppError('Ficha não encontrada', 404);
 
-    return plan
+    return plan;
   }
 }

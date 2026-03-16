@@ -1,4 +1,4 @@
-import  prismaClient  from '../../prisma/index';
+import prismaClient from '../../prisma/index';
 
 export class ListWorkoutPlansByStudentService {
   async execute(studentId: string) {
@@ -6,7 +6,11 @@ export class ListWorkoutPlansByStudentService {
       where: { studentId },
       include: {
         createdBy: { select: { name: true } },
-        _count: { select: { exercises: true } },
+        days: {
+          orderBy: { order: 'asc' },
+          select: { id: true, label: true, order: true },
+        },
+        _count: { select: { days: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
