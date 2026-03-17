@@ -1,0 +1,1 @@
+{"version":3,"file":"ListWorkoutPlansbyStudentController.d.ts","sourceRoot":"","sources":["../../../src/controllers/WorkoutPlans/ListWorkoutPlansbyStudentController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAA;AAG3C,qBAAa,mCAAmC;IACxC,MAAM,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAMzC"}

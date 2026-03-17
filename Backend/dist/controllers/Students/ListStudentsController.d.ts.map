@@ -1,0 +1,1 @@
+{"version":3,"file":"ListStudentsController.d.ts","sourceRoot":"","sources":["../../../src/controllers/Students/ListStudentsController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAA;AAG3C,qBAAa,sBAAsB;IAC3B,MAAM,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAezC"}

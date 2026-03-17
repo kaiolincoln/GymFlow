@@ -1,0 +1,1 @@
+{"version":3,"file":"UpdateStudentController.d.ts","sourceRoot":"","sources":["../../../src/controllers/Students/UpdateStudentController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAA;AAc3C,qBAAa,uBAAuB;IAC5B,MAAM,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAiBzC"}

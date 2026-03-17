@@ -3,7 +3,6 @@ import { rateLimit } from 'express-rate-limit'
 
 // Middlewares
 import { Authenticated } from './middlewares/Authenticated'
-import { isPersonal} from './middlewares/isPersonal'
 import { isAdmin } from './middlewares/isAdmin'
 
 // Controllers - Auth
@@ -64,55 +63,55 @@ const loginLimiter = rateLimit({
 
 
 // ─── Públicas ───────────────────────────────────────────────
-routes.post('/users', new CreateUserController().handle)  // cadastro de usuário 
-routes.post('/session', loginLimiter, new SessionController().handle)  // login
+routes.post('/users', new CreateUserController().handle)  // Cadastro de usuário 
+routes.post('/session', loginLimiter, new SessionController().handle)  // Login
 
 // ─── Autenticadas ───────────────────────────────────────────
 routes.use(Authenticated)
 
 // Auth / Perfil
-routes.get('/me', new MeController().handle)  // ver dados do perfil
-routes.put('/me', new UpdateProfileController().handle) // atualizar nome/email do perfil
-routes.patch('/me/password', new ChangePasswordController().handle) // alterar senha do perfil
+routes.get('/me', new MeController().handle)  // Ver dados do perfil
+routes.put('/me', new UpdateProfileController().handle) // Atualizar nome/email do perfil
+routes.patch('/me/password', new ChangePasswordController().handle) // Alterar senha do perfil
 
 // Dashboard
 routes.get('/dashboard/metrics', new DashboardMetricsController().handle)   
 
 // Alunos
-routes.post('/students', new CreateStudentController().handle) // casdastro de aluno
-routes.get('/students', new ListStudentsController().handle)  // listagem de alunos
-routes.get('/students/overdue', new ListOverdueStudentsController().handle)  // listagem de alunos com mensalidade atrasada
-routes.get('/students/:id', new GetStudentController().handle)  // detalhes de um aluno
-routes.put('/students/:id', new UpdateStudentController().handle)  // atualização de dados do aluno
-routes.delete('/students/:id', isAdmin, new DeleteStudentController().handle)  // exclusão de aluno (apenas admin)
+routes.post('/students', new CreateStudentController().handle) // Casdastro de aluno
+routes.get('/students', new ListStudentsController().handle)  // Listagem de alunos
+routes.get('/students/overdue', new ListOverdueStudentsController().handle)  // Listagem de alunos com mensalidade atrasada
+routes.get('/students/:id', new GetStudentController().handle)  // Detalhes de um aluno
+routes.put('/students/:id', new UpdateStudentController().handle)  // Atualização de dados do aluno
+routes.delete('/students/:id', isAdmin, new DeleteStudentController().handle)  // Exclusão de aluno (apenas admin)
 
 // Pagamentos
-routes.post('/students/:id/payments', new CreatePaymentController().handle)  // criação de pagamento para um aluno
-routes.get('/students/:id/payments', new ListPaymentsByStudentController().handle)  // listagem de pagamentos de um aluno
-routes.patch('/payments/:id/status', new UpdatePaymentStatusController().handle)  // atualização do status de um pagamento
-routes.get('/payments/upcoming', new ListUpcomingPaymentsController().handle)  // listagem de pagamentos com vencimento nos próximos 7 dias
-routes.get('/payments', new ListAllPaymentsController().handle) // lista todos os pagamentos
+routes.post('/students/:id/payments', new CreatePaymentController().handle)  // Criação de pagamento para um aluno
+routes.get('/students/:id/payments', new ListPaymentsByStudentController().handle)  // Listagem de pagamentos de um aluno
+routes.patch('/payments/:id/status', new UpdatePaymentStatusController().handle)  // Atualização do status de um pagamento
+routes.get('/payments/upcoming', new ListUpcomingPaymentsController().handle)  // Listagem de pagamentos com vencimento nos próximos 7 dias
+routes.get('/payments', new ListAllPaymentsController().handle) // Lista todos os pagamentos
 
 // Fichas de Treino
-routes.post('/students/:id/workout-plans', new CreateWorkoutPlanController().handle)  // criação de ficha de treino para um aluno
-routes.get('/students/:id/workout-plans', new ListWorkoutPlansByStudentController().handle)  // listagem de fichas de treino de um aluno
-routes.get('/workout-plans/:id', new GetWorkoutPlanController().handle)  // detalhes de uma ficha de treino
-routes.put('/workout-plans/:id', new UpdateWorkoutPlanController().handle)  // atualização de dados de uma ficha de treino
-routes.delete('/workout-plans/:id', new DeleteWorkoutPlanController().handle)  // exclusão de ficha de treino
-routes.patch('/workout-plans/:id/activate', new ActivateWorkoutPlanController().handle)  // ativação de uma ficha de treino (define como ativa e desativa as outras do mesmo aluno)
+routes.post('/students/:id/workout-plans', new CreateWorkoutPlanController().handle)  // Criação de ficha de treino para um aluno
+routes.get('/students/:id/workout-plans', new ListWorkoutPlansByStudentController().handle)  // Listagem de fichas de treino de um aluno
+routes.get('/workout-plans/:id', new GetWorkoutPlanController().handle)  // Detalhes de uma ficha de treino
+routes.put('/workout-plans/:id', new UpdateWorkoutPlanController().handle)  // Atualização de dados de uma ficha de treino
+routes.delete('/workout-plans/:id', new DeleteWorkoutPlanController().handle)  // Exclusão de ficha de treino
+routes.patch('/workout-plans/:id/activate', new ActivateWorkoutPlanController().handle)  // Ativação de uma ficha de treino (define como ativa e desativa as outras do mesmo aluno)
 
 // Exercícios (banco)
-routes.post('/exercises', isAdmin, new CreateExerciseController().handle)  // criação de exercício (apenas admin)
-routes.get('/exercises', new ListExercisesController().handle)  // listagem de exercícios
-routes.put('/exercises/:id', isAdmin, new UpdateExerciseController().handle)  // atualização de dados de um exercício (apenas admin)
-routes.delete('/exercises/:id', isAdmin, new DeleteExerciseController().handle)  // exclusão de exercício (apenas admin)
+routes.post('/exercises', isAdmin, new CreateExerciseController().handle)  // Criação de exercício (apenas admin)
+routes.get('/exercises', new ListExercisesController().handle)  // Listagem de exercícios
+routes.put('/exercises/:id', isAdmin, new UpdateExerciseController().handle)  // Atualização de dados de um exercício (apenas admin)
+routes.delete('/exercises/:id', isAdmin, new DeleteExerciseController().handle)  // Exclusão de exercício (apenas admin)
 
 // Bory records
-routes.post('/students/:id/body-records', new CreateBodyRecordController().handle) 
-routes.get('/students/:id/body-records', new ListBodyRecordsController().handle)
+routes.post('/students/:id/body-records', new CreateBodyRecordController().handle)  // Criar evolucao corporal
+routes.get('/students/:id/body-records', new ListBodyRecordsController().handle) // Lista evolucao corporal
 
 // Chat (Personal ↔ Aluno por sala = studentId)
-routes.get('/chat/:studentId/stream', (req, res) => chatController.stream(req, res))
+routes.get('/chat/:studentId/stream', (req, res) => chatController.stream(req, res))   
 routes.post('/chat/:studentId/messages', (req, res) => chatController.sendMessage(req, res))
 routes.get('/chat/:studentId/messages', (req, res) => chatController.getMessages(req, res))
  

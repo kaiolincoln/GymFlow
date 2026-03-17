@@ -1,0 +1,1 @@
+{"version":3,"file":"ListPaymentsByStudentController.d.ts","sourceRoot":"","sources":["../../../src/controllers/Payments/ListPaymentsByStudentController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAA;AAG3C,qBAAa,+BAA+B;IACpC,MAAM,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAMzC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"isAdmin.d.ts","sourceRoot":"","sources":["../../src/middlewares/isAdmin.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,YAAY,EAAE,MAAM,SAAS,CAAA;AAEzD,wBAAgB,OAAO,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ,EAAE,IAAI,EAAE,YAAY,6CAKtE"}

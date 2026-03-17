@@ -1,0 +1,1 @@
+{"version":3,"file":"UpdateWorkoutPlanController.d.ts","sourceRoot":"","sources":["../../../src/controllers/WorkoutPlans/UpdateWorkoutPlanController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAA;AAS3C,qBAAa,2BAA2B;IAChC,MAAM,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAiBzC"}

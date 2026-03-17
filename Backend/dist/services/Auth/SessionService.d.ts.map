@@ -1,0 +1,1 @@
+{"version":3,"file":"SessionService.d.ts","sourceRoot":"","sources":["../../../src/services/Auth/SessionService.ts"],"names":[],"mappings":"AAIA,UAAU,cAAc;IACtB,KAAK,EAAE,MAAM,CAAA;IACb,QAAQ,EAAE,MAAM,CAAA;CACjB;AAED,qBAAa,cAAc;IACnB,OAAO,CAAC,EAAE,KAAK,EAAE,QAAQ,EAAE,EAAE,cAAc;;;;;;;;;;CAiClD"}
